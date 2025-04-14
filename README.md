@@ -2,6 +2,9 @@
 
 SES Email Manager is a web application for managing and sending emails using AWS SES (Simple Email Service).
 
+![Features Preview](./screenshot.PNG)
+
+
 ## Features
 
 - Manage email templates.
@@ -11,8 +14,8 @@ SES Email Manager is a web application for managing and sending emails using AWS
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
-   cd ses-template-wizard
+   git clone https://github.com/chihebnabil/ses-email-manager
+   cd ses-email-manager
    ```
 
 2. Install dependencies:
