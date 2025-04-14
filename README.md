@@ -1,22 +1,21 @@
-# SES Email Manager
+# SES Template Manager
 
-SES Email Manager is a web application for managing and sending emails using AWS SES (Simple Email Service).
+SES Template Manager is a web application for managing and sending emails using AWS SES (Simple Email Service).
 
 ![Features Preview](./screenshot.PNG)
 
-
 ## Features
 
-- Manage email templates.
+- Manage SES email templates with a clean UI.
 - User-friendly interface with modern UI components.
 
 ## Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/chihebnabil/ses-email-manager
-   cd ses-email-manager
-   ```
+   git clone https://github.com/chihebnabil/ses-template-manager
+   cd ses-template-manager
+
 
 2. Install dependencies:
    ```bash
