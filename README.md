@@ -2,6 +2,8 @@
 
 SES Template Manager is a web application for managing and sending emails using AWS SES (Simple Email Service).
 
+## Screenshot
+
 ![Features Preview](./screenshot.PNG)
 
 ## Features
@@ -37,9 +39,6 @@ SES Template Manager is a web application for managing and sending emails using 
 
 **Credentials Storage**: AWS SES credentials are stored in the browser's `localStorage`. Ensure that you are using the application in a secure environment to prevent unauthorized access.
 
-## Screenshot
-
-![Application Screenshot](./screenshot.png)
 
 ## License
 
