@@ -1,3 +1,4 @@
+
 import { 
   SESClient, 
   ListTemplatesCommand,
@@ -5,6 +6,7 @@ import {
   CreateTemplateCommand,
   UpdateTemplateCommand,
   DeleteTemplateCommand,
+  SendTemplatedEmailCommand,
   Template,
   CreateTemplateCommandInput,
   UpdateTemplateCommandInput,
@@ -215,6 +217,34 @@ export const deleteTemplate = async (id: string): Promise<void> => {
   } catch (error) {
     console.error(`Error deleting template ${id}:`, error);
     toast.error(`Failed to delete template "${id}" from AWS SES`);
+    throw error;
+  }
+};
+
+// Send an email using a template
+export const sendTemplatedEmail = async (
+  templateName: string,
+  source: string,
+  to: string[],
+  templateData: Record<string, any> = {}
+): Promise<string> => {
+  const client = getSESClient();
+  if (!client) throw new Error("No SES client available");
+  
+  try {
+    const command = new SendTemplatedEmailCommand({
+      Source: source,
+      Destination: {
+        ToAddresses: to
+      },
+      Template: templateName,
+      TemplateData: JSON.stringify(templateData)
+    });
+    
+    const response = await client.send(command);
+    return response.MessageId || '';
+  } catch (error) {
+    console.error('Error sending templated email:', error);
     throw error;
   }
 };

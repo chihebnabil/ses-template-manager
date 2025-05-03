@@ -11,3 +11,10 @@ export interface EmailTemplate {
 
 export type CreateEmailTemplateInput = Omit<EmailTemplate, 'id' | 'createdAt' | 'updatedAt'>;
 export type UpdateEmailTemplateInput = Partial<CreateEmailTemplateInput>;
+
+export interface SendEmailParams {
+  templateName: string;
+  fromEmail: string;
+  toEmails: string[];
+  templateData?: Record<string, any>;
+}
