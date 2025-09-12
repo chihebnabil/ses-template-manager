@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase-admin';
 import { UserRecord } from 'firebase-admin/auth';
+import { AuthMiddleware, getClientIp } from '@/lib/auth-middleware';
 
 export interface FirebaseAuthUser {
     uid: string;
@@ -35,6 +36,31 @@ function convertUserRecord(userRecord: UserRecord): FirebaseAuthUser {
 
 export async function GET(request: NextRequest) {
     try {
+        // Authenticate the request - require admin privileges for user listing
+        const authResult = await AuthMiddleware.authenticate(request, {
+            requireApiKey: true,
+            requireFirebaseAuth: true,
+            requireAdmin: true, // Only admins can list users
+            validateOrigin: true,
+            validateAwsCredentials: true
+        });
+
+        if (!authResult.success) {
+            console.warn('Unauthorized users API access attempt:', authResult.error);
+            return authResult.response!;
+        }
+
+        const { context } = authResult;
+        
+        // Log user data access for audit
+        console.log('Users API accessed:', {
+            userId: context?.userId,
+            userEmail: context?.userEmail,
+            isAdmin: context?.isAdmin,
+            timestamp: new Date().toISOString(),
+            clientIp: getClientIp(request)
+        });
+
         const { searchParams } = new URL(request.url);
 
         // Parse query parameters

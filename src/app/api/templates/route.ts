@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SESClient, ListTemplatesCommand, GetTemplateCommand } from '@aws-sdk/client-ses';
 import { EmailTemplate } from '@/types';
 import { fixTemplateEmojis } from '@/lib/emoji-utils';
+import { AuthMiddleware, getClientIp } from '@/lib/auth-middleware';
 
 // Initialize SES client with server-side environment variables
 const getSESClient = (): SESClient => {
@@ -16,6 +17,30 @@ const getSESClient = (): SESClient => {
 
 export async function GET(request: NextRequest) {
     try {
+        // Authenticate the request
+        const authResult = await AuthMiddleware.authenticate(request, {
+            requireApiKey: true,
+            requireFirebaseAuth: true,
+            requireAdmin: false,
+            validateOrigin: true,
+            validateAwsCredentials: true
+        });
+
+        if (!authResult.success) {
+            console.warn('Unauthorized templates access attempt:', authResult.error);
+            return authResult.response!;
+        }
+
+        const { context } = authResult;
+        
+        // Log template access for audit
+        console.log('Templates API accessed:', {
+            userId: context?.userId,
+            userEmail: context?.userEmail,
+            timestamp: new Date().toISOString(),
+            clientIp: getClientIp(request)
+        });
+
         const { searchParams } = new URL(request.url);
         const searchTerm = searchParams.get('search') || undefined;
 

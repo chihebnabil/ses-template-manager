@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase-admin';
 import { SESClient, SendTemplatedEmailCommand } from '@aws-sdk/client-ses';
+import { AuthMiddleware, getClientIp } from '@/lib/auth-middleware';
 
 // Initialize SES client
 const sesClient = new SESClient({
@@ -11,6 +12,9 @@ const sesClient = new SESClient({
     },
 });
 
+// Rate limiter for bulk email operations (max 5 requests per hour per user)
+const bulkEmailRateLimiter = AuthMiddleware.createRateLimiter(5, 60 * 60 * 1000);
+
 interface BulkEmailRequest {
     templateId: string;
     userIds: string[];
@@ -19,6 +23,31 @@ interface BulkEmailRequest {
 
 export async function POST(request: NextRequest) {
     try {
+        // Authenticate and authorize the request
+        const authResult = await AuthMiddleware.authenticate(request, {
+            requireApiKey: true,
+            requireFirebaseAuth: true,
+            requireAdmin: false, // Allow authenticated users, not just admins
+            validateOrigin: true,
+            validateAwsCredentials: true
+        });
+
+        if (!authResult.success) {
+            console.warn('Unauthorized bulk email attempt:', authResult.error);
+            return authResult.response!;
+        }
+
+        const { context } = authResult;
+        
+        // Apply rate limiting per user
+        const clientId = context?.userId || getClientIp(request);
+        if (!bulkEmailRateLimiter(clientId)) {
+            return NextResponse.json(
+                { error: 'Rate limit exceeded. Maximum 5 bulk email requests per hour.' },
+                { status: 429 }
+            );
+        }
+
         const body: BulkEmailRequest = await request.json();
         const { templateId, userIds, subject } = body;
 
@@ -28,6 +57,16 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
+
+        // Log bulk email operation for security audit
+        console.log('Bulk email operation initiated:', {
+            userId: context?.userId,
+            userEmail: context?.userEmail,
+            templateId,
+            recipientCount: userIds.length,
+            timestamp: new Date().toISOString(),
+            clientIp: getClientIp(request)
+        });
 
         // Create a streaming response
         const encoder = new TextEncoder();
