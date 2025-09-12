@@ -15,6 +15,8 @@ export interface FirebaseUser {
   customClaims?: Record<string, any>;
 }
 
+import { apiClient } from './api-client';
+
 export interface UserFilters {
   emailVerified?: boolean;
   disabled?: boolean;
@@ -73,13 +75,9 @@ export const getUsers = async (filters?: UserFilters, maxResults: number = 1000)
       searchParams.set('provider', filters.provider);
     }
 
-    const response = await fetch(`/api/users?${searchParams.toString()}`);
+    const response = await apiClient.get(`/api/users?${searchParams.toString()}`);
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
+    const data = response;
     
     // Convert date strings back to Date objects
     return data.users.map((user: any) => ({
@@ -97,23 +95,12 @@ export const getUsers = async (filters?: UserFilters, maxResults: number = 1000)
 // Get user count with filters (for estimation before bulk send)
 export const getUserCount = async (filters?: UserFilters): Promise<number> => {
   try {
-    const response = await fetch('/api/users', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'count',
-        filters,
-        maxResults: 10000
-      }),
+    const data = await apiClient.post('/api/users', {
+      action: 'count',
+      filters,
+      maxResults: 10000
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
     return data.count;
   } catch (error) {
     console.error('Error counting users:', error);
@@ -124,23 +111,11 @@ export const getUserCount = async (filters?: UserFilters): Promise<number> => {
 // Get sample users for preview (first 5 users that match filters)
 export const getSampleUsers = async (filters?: UserFilters): Promise<FirebaseUser[]> => {
   try {
-    const response = await fetch('/api/users', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'sample',
-        filters,
-        maxResults: 20
-      }),
+    const data = await apiClient.post('/api/users', {
+      action: 'sample',
+      filters,
+      maxResults: 20
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
     
     // Convert date strings back to Date objects
     return data.users.map((user: any) => ({

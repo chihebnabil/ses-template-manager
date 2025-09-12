@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { apiClient } from '@/lib/api-client';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -76,17 +77,11 @@ export default function BulkEmailPageSimple() {
     const loadTemplates = async () => {
         setIsLoadingTemplates(true);
         try {
-            const response = await fetch('/api/templates');
-            if (response.ok) {
-                const data = await response.json();
-                setTemplates(data.templates || []);
-            } else {
-                console.error('Failed to load templates:', await response.text());
-                setError('Failed to load email templates. Please check your AWS SES configuration.');
-            }
+            const data = await apiClient.get('/api/templates');
+            setTemplates(data.templates || []);
         } catch (err) {
             console.error('Error loading templates:', err);
-            setError('Failed to load email templates. Please check your AWS SES configuration.');
+            setError('Failed to load email templates. Please check your authentication and try again.');
         } finally {
             setIsLoadingTemplates(false);
         }
@@ -154,9 +149,8 @@ export default function BulkEmailPageSimple() {
                 subject: customSubject
             };
 
-            const response = await fetch('/api/bulk-email', {
+            const response = await apiClient.fetch('/api/bulk-email', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(request)
             });
 

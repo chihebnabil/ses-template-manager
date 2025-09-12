@@ -95,10 +95,27 @@ FROM_EMAIL=noreply@yourdomain.com
 ```bash
 # Generate with: openssl rand -hex 32
 API_KEY=your_secure_api_key_here
+NEXT_PUBLIC_API_KEY=your_secure_api_key_here
 
 # Comma-separated list of allowed origins
 ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 ```
+
+### Deployment
+
+#### Vercel Deployment
+1. **Deploy to Vercel** and configure environment variables
+2. **Set all environment variables** in Vercel dashboard:
+   - All Firebase configuration variables
+   - AWS SES credentials
+   - `API_KEY` and `NEXT_PUBLIC_API_KEY` (same value)
+   - `ALLOWED_ORIGINS` (your production domain)
+3. **Test authentication** after deployment
+
+#### Environment Variables for Production
+- Use different API keys for different environments
+- Set `ALLOWED_ORIGINS` to your production domain only
+- Use production Firebase project credentials
 
 ### AWS SES Setup
 
