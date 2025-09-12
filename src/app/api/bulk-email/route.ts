@@ -25,9 +25,8 @@ export async function POST(request: NextRequest) {
     try {
         // Authenticate and authorize the request
         const authResult = await AuthMiddleware.authenticate(request, {
-            requireApiKey: true,
-            requireFirebaseAuth: true,
-            requireAdmin: false, // Allow authenticated users, not just admins
+            requireApiKey: false,
+            requireSession: true,
             validateOrigin: true,
             validateAwsCredentials: true
         });
@@ -39,8 +38,8 @@ export async function POST(request: NextRequest) {
 
         const { context } = authResult;
         
-        // Apply rate limiting per user
-        const clientId = context?.userId || getClientIp(request);
+        // Apply rate limiting per IP
+        const clientId = getClientIp(request);
         if (!bulkEmailRateLimiter(clientId)) {
             return NextResponse.json(
                 { error: 'Rate limit exceeded. Maximum 5 bulk email requests per hour.' },
@@ -60,12 +59,11 @@ export async function POST(request: NextRequest) {
 
         // Log bulk email operation for security audit
         console.log('Bulk email operation initiated:', {
-            userId: context?.userId,
-            userEmail: context?.userEmail,
             templateId,
             recipientCount: userIds.length,
             timestamp: new Date().toISOString(),
-            clientIp: getClientIp(request)
+            clientIp: getClientIp(request),
+            authenticated: context?.isAuthenticated
         });
 
         // Create a streaming response

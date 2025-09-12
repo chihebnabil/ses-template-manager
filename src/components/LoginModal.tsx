@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { SESClient, ListTemplatesCommand } from '@aws-sdk/client-ses';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -43,24 +42,30 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onOpenChange }) => {
     setIsLoggingIn(true);
     
     try {
-      // Verify credentials by making a test API call
-      const client = new SESClient({
-        region: credentials.region,
-        credentials: {
-          accessKeyId: credentials.accessKeyId,
-          secretAccessKey: credentials.secretAccessKey,
-        }
+      // Validate credentials against server environment variables
+      const response = await fetch('/api/auth/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
       });
-      
-      // Try to list templates to verify credentials work
-      await client.send(new ListTemplatesCommand({}));
-      
-      // Store in localStorage (not secure for real AWS credentials!)
-      localStorage.setItem('awsCredentials', JSON.stringify(credentials));
-      
-      toast.success('Successfully logged in');
-      onOpenChange(false);
-      router.push('/');
+
+      if (response.ok) {
+        // Store minimal session info in localStorage
+        localStorage.setItem('awsCredentials', JSON.stringify({
+          isAuthenticated: true,
+          region: credentials.region,
+          timestamp: Date.now()
+        }));
+        
+        toast.success('Successfully logged in');
+        onOpenChange(false);
+        router.push('/');
+      } else {
+        const error = await response.json();
+        toast.error(error.message || 'Invalid credentials');
+      }
     } catch (error) {
       console.error('Login error:', error);
       toast.error('Login failed. Please check your credentials and try again.');

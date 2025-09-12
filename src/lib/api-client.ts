@@ -1,29 +1,31 @@
-import { getAuth } from 'firebase/auth';
-import { auth } from './firebase';
-
 /**
- * Utility for making authenticated API calls with required headers
+ * Utility for making authenticated API calls with session tokens
  */
 export class AuthenticatedApiClient {
-  private static getApiKey(): string {
-    const apiKey = process.env.NEXT_PUBLIC_API_KEY;
-    if (!apiKey) {
-      throw new Error('API key not configured. Please set NEXT_PUBLIC_API_KEY environment variable.');
-    }
-    return apiKey;
+  private static getSessionToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    
+    const credentials = localStorage.getItem('awsCredentials');
+    return credentials;
   }
 
-  private static async getFirebaseToken(): Promise<string> {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      throw new Error('User not authenticated. Please log in first.');
-    }
+  private static isSessionValid(): boolean {
+    if (typeof window === 'undefined') return false;
     
+    const credentials = localStorage.getItem('awsCredentials');
+    if (!credentials) return false;
+
     try {
-      const token = await currentUser.getIdToken();
-      return token;
-    } catch (error) {
-      throw new Error('Failed to get authentication token. Please log in again.');
+      const sessionData = JSON.parse(credentials);
+      if (!sessionData.isAuthenticated || !sessionData.timestamp) return false;
+
+      // Check if session is not too old (24 hours)
+      const sessionAge = Date.now() - sessionData.timestamp;
+      const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+      
+      return sessionAge < maxAge;
+    } catch {
+      return false;
     }
   }
 
@@ -32,14 +34,20 @@ export class AuthenticatedApiClient {
    */
   public static async fetch(url: string, options: RequestInit = {}): Promise<Response> {
     try {
-      // Get authentication credentials
-      const apiKey = this.getApiKey();
-      const firebaseToken = await this.getFirebaseToken();
+      // Check if session is valid
+      if (!this.isSessionValid()) {
+        throw new Error('Session expired. Please log in again.');
+      }
+
+      // Get session token
+      const sessionToken = this.getSessionToken();
+      if (!sessionToken) {
+        throw new Error('No authentication session found. Please log in.');
+      }
 
       // Prepare headers
       const headers = new Headers(options.headers);
-      headers.set('x-api-key', apiKey);
-      headers.set('Authorization', `Bearer ${firebaseToken}`);
+      headers.set('x-session-token', sessionToken);
       headers.set('Content-Type', 'application/json');
 
       // Make the request

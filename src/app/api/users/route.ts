@@ -38,9 +38,8 @@ export async function GET(request: NextRequest) {
     try {
         // Authenticate the request - allow any authenticated user
         const authResult = await AuthMiddleware.authenticate(request, {
-            requireApiKey: true,
-            requireFirebaseAuth: true,
-            requireAdmin: false, // Allow any authenticated user
+            requireApiKey: false,
+            requireSession: true,
             validateOrigin: true,
             validateAwsCredentials: true
         });
@@ -54,10 +53,9 @@ export async function GET(request: NextRequest) {
         
         // Log user data access for audit
         console.log('Users API accessed:', {
-            userId: context?.userId,
-            userEmail: context?.userEmail,
             timestamp: new Date().toISOString(),
-            clientIp: getClientIp(request)
+            clientIp: getClientIp(request),
+            authenticated: context?.isAuthenticated
         });
 
         const { searchParams } = new URL(request.url);

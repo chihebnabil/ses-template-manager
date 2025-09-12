@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase-admin';
 
 export interface AuthContext {
   isAuthenticated: boolean;
-  userId?: string;
-  userEmail?: string;
-  isAdmin?: boolean;
+  region?: string;
 }
 
 /**
- * Comprehensive authentication and authorization middleware
+ * Simple authentication middleware for AWS credentials
  */
 export class AuthMiddleware {
   /**
@@ -25,31 +22,6 @@ export class AuthMiddleware {
     }
     
     return apiKey === expectedApiKey;
-  }
-
-  /**
-   * Validate Firebase authentication token
-   */
-  private static async validateFirebaseToken(request: NextRequest): Promise<{ isValid: boolean; userId?: string; userEmail?: string }> {
-    try {
-      const authHeader = request.headers.get('authorization');
-      
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return { isValid: false };
-      }
-      
-      const token = authHeader.substring(7);
-      const decodedToken = await adminAuth.verifyIdToken(token);
-      
-      return {
-        isValid: true,
-        userId: decodedToken.uid,
-        userEmail: decodedToken.email
-      };
-    } catch (error) {
-      console.error('Firebase token validation failed:', error);
-      return { isValid: false };
-    }
   }
 
   /**
@@ -88,15 +60,37 @@ export class AuthMiddleware {
   }
 
   /**
-   * Check if user has admin privileges
+   * Validate session token (simple check for authenticated session)
    */
-  private static async checkAdminPrivileges(userId: string): Promise<boolean> {
+  private static validateSession(request: NextRequest): { isValid: boolean; region?: string } {
     try {
-      const userRecord = await adminAuth.getUser(userId);
-      return userRecord.customClaims?.admin === true;
+      const sessionHeader = request.headers.get('x-session-token');
+      
+      if (!sessionHeader) {
+        return { isValid: false };
+      }
+      
+      // Simple session validation - in a real app you'd check against a database/redis
+      // For now, we just check if it's a valid JSON with required fields
+      const sessionData = JSON.parse(sessionHeader);
+      
+      if (sessionData.isAuthenticated && sessionData.timestamp) {
+        // Check if session is not too old (24 hours)
+        const sessionAge = Date.now() - sessionData.timestamp;
+        const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+        
+        if (sessionAge < maxAge) {
+          return {
+            isValid: true,
+            region: sessionData.region
+          };
+        }
+      }
+      
+      return { isValid: false };
     } catch (error) {
-      console.error('Error checking admin privileges:', error);
-      return false;
+      console.error('Session validation failed:', error);
+      return { isValid: false };
     }
   }
 
@@ -107,8 +101,7 @@ export class AuthMiddleware {
     request: NextRequest,
     options: {
       requireApiKey?: boolean;
-      requireFirebaseAuth?: boolean;
-      requireAdmin?: boolean;
+      requireSession?: boolean;
       validateOrigin?: boolean;
       validateAwsCredentials?: boolean;
     } = {}
@@ -119,9 +112,8 @@ export class AuthMiddleware {
     response?: NextResponse 
   }> {
     const {
-      requireApiKey = true,
-      requireFirebaseAuth = true,
-      requireAdmin = false,
+      requireApiKey = false,
+      requireSession = true,
       validateOrigin = true,
       validateAwsCredentials = true
     } = options;
@@ -165,16 +157,16 @@ export class AuthMiddleware {
 
       let authContext: AuthContext = { isAuthenticated: false };
 
-      // Validate Firebase authentication
-      if (requireFirebaseAuth) {
-        const firebaseAuth = await this.validateFirebaseToken(request);
+      // Validate session
+      if (requireSession) {
+        const sessionAuth = this.validateSession(request);
         
-        if (!firebaseAuth.isValid) {
+        if (!sessionAuth.isValid) {
           return {
             success: false,
-            error: 'Invalid Firebase token',
+            error: 'Invalid session',
             response: NextResponse.json(
-              { error: 'Unauthorized: Invalid authentication token' },
+              { error: 'Unauthorized: Invalid or expired session' },
               { status: 401 }
             )
           };
@@ -182,27 +174,8 @@ export class AuthMiddleware {
 
         authContext = {
           isAuthenticated: true,
-          userId: firebaseAuth.userId,
-          userEmail: firebaseAuth.userEmail
+          region: sessionAuth.region
         };
-
-        // Check admin privileges if required
-        if (requireAdmin && firebaseAuth.userId) {
-          const isAdmin = await this.checkAdminPrivileges(firebaseAuth.userId);
-          
-          if (!isAdmin) {
-            return {
-              success: false,
-              error: 'Admin privileges required',
-              response: NextResponse.json(
-                { error: 'Forbidden: Admin privileges required' },
-                { status: 403 }
-              )
-            };
-          }
-          
-          authContext.isAdmin = true;
-        }
       } else if (requireApiKey) {
         // If only API key is required, mark as authenticated
         authContext.isAuthenticated = true;
