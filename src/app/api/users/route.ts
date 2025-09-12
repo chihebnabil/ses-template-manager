@@ -36,11 +36,11 @@ function convertUserRecord(userRecord: UserRecord): FirebaseAuthUser {
 
 export async function GET(request: NextRequest) {
     try {
-        // Authenticate the request - require admin privileges for user listing
+        // Authenticate the request - allow any authenticated user
         const authResult = await AuthMiddleware.authenticate(request, {
             requireApiKey: true,
             requireFirebaseAuth: true,
-            requireAdmin: true, // Only admins can list users
+            requireAdmin: false, // Allow any authenticated user
             validateOrigin: true,
             validateAwsCredentials: true
         });
@@ -56,7 +56,6 @@ export async function GET(request: NextRequest) {
         console.log('Users API accessed:', {
             userId: context?.userId,
             userEmail: context?.userEmail,
-            isAdmin: context?.isAdmin,
             timestamp: new Date().toISOString(),
             clientIp: getClientIp(request)
         });

@@ -147,11 +147,7 @@ ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
    - Go to Firebase Console → Project Settings → Service Accounts
    - Generate new private key
    - Add the credentials to your `.env.local`
-3. **Set up admin users:**
-   ```javascript
-   // Use Firebase Admin SDK or Console to set custom claims
-   admin.auth().setCustomUserClaims(uid, { admin: true });
-   ```
+3. **All authenticated users** can access the application features
 
 See [BULK_EMAIL_SETUP.md](./BULK_EMAIL_SETUP.md) for detailed setup instructions.
 
@@ -170,7 +166,7 @@ Authorization: Bearer your_firebase_id_token
 ### API Endpoints
 
 - `GET /api/templates` - List email templates (requires authentication)
-- `GET /api/users` - List Firebase users (requires admin privileges)
+- `GET /api/users` - List Firebase users (requires authentication)
 - `POST /api/bulk-email` - Send bulk emails (requires authentication)
 
 ## Usage
@@ -190,8 +186,10 @@ Authorization: Bearer your_firebase_id_token
 
 ### Admin Operations
 - **User Management**: View and manage Firebase users
-- **Campaign Monitoring**: Access detailed campaign logs
+- **Campaign Monitoring**: Access detailed campaign logs  
 - **Security Audit**: Review access logs and security events
+
+*Note: All authenticated users have access to these features. Implement additional role-based access control if needed.*
 
 ## Security Best Practices
 
