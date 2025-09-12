@@ -12,13 +12,10 @@ interface EmailPreviewProps {
   onToggleVisibility: () => void;
 }
 
-const EmailPreview: React.FC<{
-  children?: React.ReactNode;
-}> = ({
+const EmailPreview: React.FC<EmailPreviewProps> = ({
   template,
   isVisible,
-  onToggleVisibility,
-  children
+  onToggleVisibility
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 

@@ -8,11 +8,8 @@ interface TemplateFormSkeletonProps {
   onBack: () => void;
 }
 
-const TemplateFormSkeleton: React.FC<{
-  children?: React.ReactNode;
-}> = ({
-  onBack,
-  children
+const TemplateFormSkeleton: React.FC<TemplateFormSkeletonProps> = ({
+  onBack
 }) => {
   return (
     <div className="space-y-6 animate-fade-in">

@@ -16,14 +16,11 @@ interface TemplateDetailsFormProps {
   handleHtmlChange: (code: string) => void;
 }
 
-const TemplateDetailsForm: React.FC<{
-  children?: React.ReactNode;
-}> = ({
+const TemplateDetailsForm: React.FC<TemplateDetailsFormProps> = ({
   formData,
   errors,
   handleChange,
-  handleHtmlChange,
-  children
+  handleHtmlChange
 }) => {
   return (
     <Card>

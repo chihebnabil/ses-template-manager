@@ -14,13 +14,10 @@ interface HtmlEditorProps {
   error?: string;
 }
 
-const HtmlEditor: React.FC<{
-  children?: React.ReactNode;
-}> = ({
+const HtmlEditor: React.FC<HtmlEditorProps> = ({
   value,
   onChange,
-  error,
-  children
+  error
 }) => {
   const detectLanguage = (code: string): string => {
     if (code.includes('<style') && code.includes('</style>')) {

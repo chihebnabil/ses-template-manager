@@ -22,15 +22,12 @@ interface DeleteTemplateDialogProps {
   onDeleted: () => void;
 }
 
-const DeleteTemplateDialog: React.FC<{
-  children?: React.ReactNode;
-}> = ({
+const DeleteTemplateDialog: React.FC<DeleteTemplateDialogProps> = ({
   isOpen,
   templateId,
   templateName,
   onClose,
-  onDeleted,
-  children
+  onDeleted
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();

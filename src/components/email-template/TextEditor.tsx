@@ -10,13 +10,10 @@ interface TextEditorProps {
   error?: string;
 }
 
-const TextEditor: React.FC<{
-  children?: React.ReactNode;
-}> = ({
+const TextEditor: React.FC<TextEditorProps> = ({
   value,
   onChange,
-  error,
-  children
+  error
 }) => {
   return (
     <div className="space-y-2">
