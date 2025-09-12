@@ -1,3 +1,4 @@
+'use client';
 
 import React from 'react';
 import { Label } from '@/components/ui/label';
@@ -9,7 +10,11 @@ interface TextEditorProps {
   error?: string;
 }
 
-const TextEditor: React.FC<TextEditorProps> = ({ value, onChange, error }) => {
+const TextEditor: React.FC<TextEditorProps> = ({
+  value,
+  onChange,
+  error
+}) => {
   return (
     <div className="space-y-2">
       <Label htmlFor="TextPart">

@@ -1,6 +1,7 @@
-
+"use client"
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { Search, FileText, PlusCircle, LogIn } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,7 @@ const EmailTemplateList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   useEffect(() => {
     // Check if user is logged in
@@ -61,7 +62,7 @@ const EmailTemplateList: React.FC = () => {
         <p className="text-muted-foreground mb-4 max-w-md">
           You need to log in with your AWS credentials to view and manage SES email templates.
         </p>
-        <Button onClick={() => navigate('/login')}>
+        <Button onClick={() => router.push('/login')}>
           <LogIn className="mr-2 h-4 w-4" />
           Login with AWS Credentials
         </Button>
@@ -73,14 +74,13 @@ const EmailTemplateList: React.FC = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <h1>Email Templates</h1>
-        <Link to="/templates/new">
+        <Link href="/templates/new">
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
             New Template
           </Button>
         </Link>
       </div>
-
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
@@ -90,7 +90,6 @@ const EmailTemplateList: React.FC = () => {
           onChange={handleSearchChange}
         />
       </div>
-
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
@@ -117,7 +116,7 @@ const EmailTemplateList: React.FC = () => {
           <p className="text-muted-foreground mb-4">
             {searchTerm ? "No templates match your search criteria" : "Create your first email template to get started"}
           </p>
-          <Link to="/templates/new">
+          <Link href="/templates/new">
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
               Create Template

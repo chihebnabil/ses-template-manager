@@ -24,7 +24,7 @@ interface SendTestEmailDialogProps {
 const SendTestEmailDialog: React.FC<SendTestEmailDialogProps> = ({
   isOpen,
   onClose,
-  templateName,
+  templateName
 }) => {
   const [fromEmail, setFromEmail] = useState<string>('');
   const [toEmails, setToEmails] = useState<string>('');

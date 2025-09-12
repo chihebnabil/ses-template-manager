@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Editor from 'react-simple-code-editor';
 import { highlight, languages } from 'prismjs';
@@ -12,7 +14,11 @@ interface HtmlEditorProps {
   error?: string;
 }
 
-const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, error }) => {
+const HtmlEditor: React.FC<HtmlEditorProps> = ({
+  value,
+  onChange,
+  error
+}) => {
   const detectLanguage = (code: string): string => {
     if (code.includes('<style') && code.includes('</style>')) {
       return 'css';

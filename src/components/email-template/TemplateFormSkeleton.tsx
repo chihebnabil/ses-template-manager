@@ -1,3 +1,4 @@
+'use client';
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,9 @@ interface TemplateFormSkeletonProps {
   onBack: () => void;
 }
 
-const TemplateFormSkeleton: React.FC<TemplateFormSkeletonProps> = ({ onBack }) => {
+const TemplateFormSkeleton: React.FC<TemplateFormSkeletonProps> = ({
+  onBack
+}) => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-2">

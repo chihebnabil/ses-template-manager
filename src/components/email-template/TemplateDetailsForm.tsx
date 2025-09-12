@@ -1,3 +1,4 @@
+'use client';
 
 import React from 'react';
 import { Label } from '@/components/ui/label';
@@ -15,11 +16,11 @@ interface TemplateDetailsFormProps {
   handleHtmlChange: (code: string) => void;
 }
 
-const TemplateDetailsForm: React.FC<TemplateDetailsFormProps> = ({ 
-  formData, 
-  errors, 
+const TemplateDetailsForm: React.FC<TemplateDetailsFormProps> = ({
+  formData,
+  errors,
   handleChange,
-  handleHtmlChange 
+  handleHtmlChange
 }) => {
   return (
     <Card>

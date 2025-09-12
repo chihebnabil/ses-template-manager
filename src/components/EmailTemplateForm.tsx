@@ -1,6 +1,7 @@
+'use client';
 
+import { useParams } from 'next/navigation';
 import React from 'react';
-import { useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Trash2, SendHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DeleteTemplateDialog from './DeleteTemplateDialog';
@@ -29,7 +30,7 @@ const EmailTemplateForm: React.FC = () => {
     handleHtmlChange,
     handleSubmit,
     handleDelete,
-    navigate
+    router
   } = useTemplateForm({ id });
   
   if (!isLoggedIn) {
@@ -37,14 +38,14 @@ const EmailTemplateForm: React.FC = () => {
   }
   
   if (isLoading) {
-    return <TemplateFormSkeleton onBack={() => navigate('/')} />;
+    return <TemplateFormSkeleton onBack={() => router.push('/')} />;
   }
   
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
+          <Button variant="ghost" size="icon" onClick={() => router.push('/')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1>{isEditing ? 'Edit Template' : 'Create Template'}</h1>
@@ -74,7 +75,6 @@ const EmailTemplateForm: React.FC = () => {
           )}
         </div>
       </div>
-      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <form onSubmit={handleSubmit} className="space-y-8">
           <TemplateDetailsForm
@@ -89,7 +89,7 @@ const EmailTemplateForm: React.FC = () => {
               type="button" 
               variant="outline" 
               className="mr-2" 
-              onClick={() => navigate('/')}
+              onClick={() => router.push('/')}
               disabled={isSaving}
             >
               Cancel
@@ -113,7 +113,6 @@ const EmailTemplateForm: React.FC = () => {
           />
         </div>
       </div>
-      
       {isEditing && (
         <>
           <DeleteTemplateDialog

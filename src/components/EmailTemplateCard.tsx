@@ -1,6 +1,7 @@
+'use client';
 
+import Link from 'next/link';
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Calendar, Edit, MoreVertical, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,7 +47,7 @@ const EmailTemplateCard: React.FC<EmailTemplateCardProps> = ({ template, onDelet
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link to={`/templates/${template.id}`}>
+                  <Link href={`/templates/${template.id}`}>
                     <Edit className="h-4 w-4 mr-2" />
                     Edit
                   </Link>
@@ -62,7 +63,7 @@ const EmailTemplateCard: React.FC<EmailTemplateCardProps> = ({ template, onDelet
             </DropdownMenu>
           </div>
         </CardHeader>
-        <Link to={`/templates/${template.id}`}>
+        <Link href={`/templates/${template.id}`}>
           <CardContent className="pb-2">
             <p className="text-sm text-muted-foreground mb-2 truncate" title={template.SubjectPart}>
               Subject: {template.SubjectPart}
@@ -82,7 +83,6 @@ const EmailTemplateCard: React.FC<EmailTemplateCardProps> = ({ template, onDelet
           </div>
         </CardFooter>
       </Card>
-
       <DeleteTemplateDialog
         isOpen={showDeleteDialog}
         templateId={template.id}

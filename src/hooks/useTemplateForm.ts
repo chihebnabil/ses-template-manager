@@ -1,6 +1,6 @@
 
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { EmailTemplate } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { 
@@ -15,7 +15,7 @@ interface UseTemplateFormProps {
 
 export const useTemplateForm = ({ id }: UseTemplateFormProps) => {
   const isEditing = Boolean(id);
-  const navigate = useNavigate();
+  const router = useRouter();
   const { toast } = useToast();
   
   const [isLoading, setIsLoading] = useState(false);
@@ -44,14 +44,14 @@ export const useTemplateForm = ({ id }: UseTemplateFormProps) => {
         description: "You need to log in to manage templates",
         variant: "destructive"
       });
-      navigate('/');
+      router.push('/');
       return;
     }
     
     if (isEditing && id) {
       loadTemplate(id);
     }
-  }, [id, isEditing, navigate]);
+  }, [id, isEditing, router]);
   
   const loadTemplate = async (templateId: string) => {
     try {
@@ -64,7 +64,7 @@ export const useTemplateForm = ({ id }: UseTemplateFormProps) => {
           description: "Template not found",
           variant: "destructive"
         });
-        navigate('/');
+        router.push('/');
         return;
       }
       
@@ -80,7 +80,7 @@ export const useTemplateForm = ({ id }: UseTemplateFormProps) => {
         description: "Failed to load template",
         variant: "destructive"
       });
-      navigate('/');
+      router.push('/');
     } finally {
       setIsLoading(false);
     }
@@ -152,7 +152,7 @@ export const useTemplateForm = ({ id }: UseTemplateFormProps) => {
         });
       }
       
-      navigate('/');
+      router.push('/');
     } catch (error) {
       toast({
         title: "Error",
@@ -165,7 +165,7 @@ export const useTemplateForm = ({ id }: UseTemplateFormProps) => {
   };
   
   const handleDelete = () => {
-    navigate('/');
+    router.push('/');
   };
   
   const togglePreview = () => {
@@ -187,6 +187,6 @@ export const useTemplateForm = ({ id }: UseTemplateFormProps) => {
     handleHtmlChange,
     handleSubmit,
     handleDelete,
-    navigate
+    router
   };
 };
