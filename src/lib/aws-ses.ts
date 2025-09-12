@@ -9,8 +9,8 @@ export const listTemplates = async (searchTerm?: string): Promise<EmailTemplate[
       ? `/api/templates?search=${encodeURIComponent(searchTerm)}`
       : '/api/templates';
       
-    const response = await apiClient.get<EmailTemplate[]>(url);
-    return response;
+    const response = await apiClient.get<{ templates: EmailTemplate[]; count: number }>(url);
+    return response.templates || [];
   } catch (error) {
     console.error('Error listing templates:', error);
     throw error;
