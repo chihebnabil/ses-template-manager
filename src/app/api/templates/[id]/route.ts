@@ -21,7 +21,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         const authResult = await AuthMiddleware.authenticate(request, {
             requireApiKey: false,
             requireSession: true,
-            validateOrigin: true,
+            validateOrigin: false,
             validateAwsCredentials: true
         });
 
