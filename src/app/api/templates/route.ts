@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
         const authResult = await AuthMiddleware.authenticate(request, {
             requireApiKey: false,
             requireSession: true,
-            validateOrigin: true,
+            validateOrigin: false,
             validateAwsCredentials: true
         });
 
