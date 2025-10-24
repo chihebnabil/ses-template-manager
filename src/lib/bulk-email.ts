@@ -36,7 +36,7 @@ export const sendBulkTemplatedEmails = async (
     fromEmail,
     templateData = {},
     userFilters,
-    maxUsers = 1000,
+    maxUsers = 5000,
     batchSize = 10,
     delayBetweenBatches = 1000 // 1 second delay between batches
   } = request;
@@ -162,7 +162,7 @@ export const sendBulkTemplatedEmails = async (
 // Estimate the impact of a bulk email (without sending)
 export const estimateBulkEmail = async (
   userFilters?: UserFilters,
-  maxUsers: number = 1000
+  maxUsers: number = 5000
 ): Promise<{
   estimatedUsers: number;
   sampleUsers: FirebaseUser[];

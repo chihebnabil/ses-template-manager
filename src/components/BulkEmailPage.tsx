@@ -44,7 +44,7 @@ const BulkEmailPage = () => {
   const [fromEmail, setFromEmail] = useState<string>('');
   const [templateData, setTemplateData] = useState<string>('{}');
   const [userFilters, setUserFilters] = useState<UserFilters>({});
-  const [maxUsers, setMaxUsers] = useState<number>(1000);
+  const [maxUsers, setMaxUsers] = useState<number>(5000);
   const [batchSize, setBatchSize] = useState<number>(10);
   const [delayBetweenBatches, setDelayBetweenBatches] = useState<number>(1000);
   
@@ -276,7 +276,7 @@ const BulkEmailPage = () => {
                     min="1"
                     max="10000"
                     value={maxUsers}
-                    onChange={(e) => setMaxUsers(parseInt(e.target.value) || 1000)}
+                    onChange={(e) => setMaxUsers(parseInt(e.target.value) || 5000)}
                   />
                 </div>
 

@@ -9,7 +9,8 @@
     "lint": "next lint",
     "start": "next start",
     "type-check": "tsc --noEmit",
-    "setup-bulk-email": "node scripts/setup-bulk-email.js"
+    "setup-bulk-email": "node scripts/setup-bulk-email.js",
+    "update-firebase-env": "node scripts/update-firebase-env.js"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.787.0",

@@ -61,25 +61,47 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
 
         // Parse query parameters
-        const maxResults = parseInt(searchParams.get('maxResults') || '1000');
+        const requestedMaxResults = parseInt(searchParams.get('maxResults') || '5000');
         const pageToken = searchParams.get('pageToken') || undefined;
 
-        // Fetch users from Firebase Auth
-        const listUsersResult = await adminAuth.listUsers(maxResults, pageToken);
-        
-        // Convert users and filter out those without email
-        const users = listUsersResult.users
-            .map(convertUserRecord)
-            .filter(user => user.email && !user.disabled); // Only active users with email
+        // Firebase Auth has a hard limit of 1000 users per request
+        // If more users are requested, we need to paginate
+        const allUsers: FirebaseAuthUser[] = [];
+        let currentPageToken: string | undefined = pageToken;
+        let usersToFetch = requestedMaxResults;
+
+        while (usersToFetch > 0) {
+            const batchSize = Math.min(usersToFetch, 1000); // Firebase limit is 1000
+            const listUsersResult = await adminAuth.listUsers(batchSize, currentPageToken);
+            
+            // Convert and filter users
+            const batchUsers = listUsersResult.users
+                .map(convertUserRecord)
+                .filter(user => user.email && !user.disabled); // Only active users with email
+            
+            allUsers.push(...batchUsers);
+            
+            // Update for next iteration
+            currentPageToken = listUsersResult.pageToken;
+            usersToFetch -= batchSize;
+            
+            // If there's no more pages or we have enough users, break
+            if (!currentPageToken || allUsers.length >= requestedMaxResults) {
+                break;
+            }
+        }
 
         // Sort by creation date (newest first)
-        users.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        allUsers.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+        // Limit to requested max results
+        const users = allUsers.slice(0, requestedMaxResults);
 
         return NextResponse.json({
             users,
-            nextPageToken: listUsersResult.pageToken,
+            nextPageToken: currentPageToken,
             totalReturned: users.length,
-            hasMore: !!listUsersResult.pageToken
+            hasMore: !!currentPageToken
         });
 
     } catch (error) {

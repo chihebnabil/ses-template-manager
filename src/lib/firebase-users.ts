@@ -46,7 +46,7 @@ export interface BulkEmailResult {
 }
 
 // Get users from Firebase Auth via API route
-export const getUsers = async (filters?: UserFilters, maxResults: number = 1000): Promise<FirebaseUser[]> => {
+export const getUsers = async (filters?: UserFilters, maxResults: number = 5000): Promise<FirebaseUser[]> => {
   try {
     const searchParams = new URLSearchParams();
     
