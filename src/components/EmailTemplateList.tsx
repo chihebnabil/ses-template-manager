@@ -73,13 +73,7 @@ const EmailTemplateList: React.FC = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <h1>Email Templates</h1>
-        <Link href="/templates/new">
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Template
-          </Button>
-        </Link>
+        <h1 className="text-3xl font-bold">Email Templates</h1>
       </div>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

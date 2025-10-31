@@ -217,7 +217,7 @@ export default function BulkEmailPageSimple() {
     };
 
     return (
-        <div className="container mx-auto p-6 space-y-6">
+        <div className="space-y-6">
             <div className="flex items-center space-x-2">
                 <Mail className="h-6 w-6" />
                 <h1 className="text-2xl font-bold">Bulk Email Sender</h1>

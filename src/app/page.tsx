@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import Index from '@/components/Index';
 
 export const metadata: Metadata = {
-  title: 'Home',
-  description: 'Home page - Access and manage your content',
+  title: 'Templates - SES Template Manager',
+  description: 'Manage your AWS SES email templates',
 };
 
 export default function IndexPage() {

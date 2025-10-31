@@ -1,11 +1,16 @@
 import { Metadata } from 'next';
 import EmailTemplateForm from '@/components/EmailTemplateForm';
+import Layout from '@/components/Layout';
 
 export const metadata: Metadata = {
-  title: 'Templates - New',
-  description: 'Templates - New page - Access and manage your content',
+  title: 'New Template - SES Template Manager',
+  description: 'Create a new email template for AWS SES',
 };
 
 export default function EmailTemplateFormPage() {
-  return <EmailTemplateForm />;
+  return (
+    <Layout>
+      <EmailTemplateForm />
+    </Layout>
+  );
 }

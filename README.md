@@ -275,14 +275,6 @@ npm run lint
 - **Environment variables**: Restart the development server after changing .env.local
 - **AWS permissions**: Ensure your AWS user has SES permissions (ListTemplates, GetTemplate, etc.)
 
-### Support
-
-For issues and questions:
-1. Check the [AUTH_CHANGES_SUMMARY.md](./AUTH_CHANGES_SUMMARY.md) for authentication details
-2. Review [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)
-3. Review [BULK_EMAIL_SETUP.md](./BULK_EMAIL_SETUP.md) for Firebase features
-4. Create an issue on GitHub
-
 ## License
 
 This project is licensed under the MIT License.

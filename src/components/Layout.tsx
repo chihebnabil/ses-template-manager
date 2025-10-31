@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
-import { Mail, LogIn, LogOut, User, Send, FileText, Menu, X } from 'lucide-react';
+import { Mail, LogIn, LogOut, User, Send, FileText, Menu, X, Plus, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -36,12 +36,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const navigation = [
     {
-      name: 'Templates',
-      href: '/',
-      icon: FileText,
-      current: pathname === '/'
-    },
-    {
       name: 'Bulk Email',
       href: '/bulk-email',
       icon: Send,
@@ -49,19 +43,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   ];
 
+  const isOnTemplatesPage = pathname === '/' || pathname.startsWith('/templates');
+
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b">
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Mail className="h-6 w-6 text-primary" />
             <span className="font-semibold text-lg">SES Template Manager</span>
           </Link>
           
           {isLoggedIn && (
-            <>
+            <div className="flex items-center gap-4">
               {/* Desktop Navigation */}
-              <nav className="hidden md:flex items-center space-x-4">
+              <nav className="hidden md:flex items-center space-x-1">
                 {navigation.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -81,6 +77,26 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   );
                 })}
               </nav>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                {isOnTemplatesPage && (
+                  <Link href="/templates/new">
+                    <Button size="sm" variant='ghost'>
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Template
+                    </Button>
+                  </Link>
+                )}
+                
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
 
               {/* Mobile Navigation */}
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -110,46 +126,63 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         </Link>
                       );
                     })}
+                    {isOnTemplatesPage && (
+                      <Link 
+                        href="/templates/new"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="mx-4"
+                      >
+                        <Button size="sm" className="w-full">
+                          <Plus className="h-4 w-4 mr-2" />
+                          New Template
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 </SheetContent>
               </Sheet>
-            </>
+            </div>
           )}
           
-          {isLoggedIn ? (
-            <div className="flex items-center gap-2">
-              <Button 
-                size="sm" 
-                variant="outline"
-                className="gap-1" 
-                onClick={handleLogout}
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
-              </Button>
-            </div>
-          ) : (
+          {!isLoggedIn && (
             <Button 
               size="sm" 
-              className="gap-1" 
               onClick={() => setIsLoginModalOpen(true)}
             >
-              <LogIn className="h-4 w-4" />
-              <span>Login</span>
+              <LogIn className="h-4 w-4 mr-2" />
+              Login
             </Button>
           )}
         </div>
       </header>
-      <main className="flex-1 container py-6">
-        {children}
-      </main>
+      
+      {/* Simple breadcrumb for non-home pages */}
+      {isLoggedIn && pathname !== '/' && (
+        <div className="border-b bg-muted/30">
+          <div className="container py-2">
+            <nav className="flex items-center space-x-1 text-sm text-muted-foreground">
+              <Link href="/" className="hover:text-foreground transition-colors">
+                Templates
+              </Link>
+              <ChevronRight className="h-4 w-4" />
+              <span className="text-foreground">
+                {pathname === '/templates/new' ? 'New Template' : 
+                 pathname.startsWith('/templates/') ? 'Edit Template' :
+                 pathname === '/bulk-email' ? 'Bulk Email' : 'Page'}
+              </span>
+            </nav>
+          </div>
+        </div>
+      )}
+      
+      <main className="flex-1 container py-6">{children}</main>
       <LoginModal 
         isOpen={isLoginModalOpen} 
         onOpenChange={setIsLoginModalOpen} 
       />
-      <footer className="py-4 border-t">
+      <footer className="py-6 border-t bg-muted/20">
         <div className="container text-center text-sm text-muted-foreground">
-          SES Template Manager &copy; {new Date().getFullYear()}
+          <p>SES Template Manager &copy; {new Date().getFullYear()}</p>
         </div>
       </footer>
     </div>
