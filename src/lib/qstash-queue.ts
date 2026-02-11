@@ -84,9 +84,12 @@ export async function createEmailJob(
     await redis.set(`${JOB_PREFIX}${id}`, JSON.stringify(job));
 
     // Create QStash messages for each batch
-    const baseUrl = process.env.VERCEL_URL 
-        ? `https://${process.env.VERCEL_URL}` 
-        : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // Use NEXT_PUBLIC_APP_URL first (production domain), then VERCEL_URL (deployment), then localhost
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL 
+        ? `https://${process.env.NEXT_PUBLIC_APP_URL}` 
+        : process.env.VERCEL_URL 
+            ? `https://${process.env.VERCEL_URL}` 
+            : 'http://localhost:3000';
 
     const publishPromises = [];
     for (let i = 0; i < userIds.length; i += BATCH_SIZE) {
