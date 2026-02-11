@@ -47,7 +47,7 @@ export interface EmailJob {
 }
 
 const JOB_PREFIX = 'email-job:';
-const BATCH_SIZE = 10; // Process 10 emails per QStash message
+const BATCH_SIZE = 5; // Process 5 emails per QStash message (smaller batches = less waste on retries)
 
 export function calculateBatchCount(totalEmails: number): number {
     return Math.ceil(totalEmails / BATCH_SIZE);
