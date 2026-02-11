@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -14,7 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Mail, Users, Send, CheckCircle, AlertCircle, Search } from 'lucide-react';
+import { Loader2, Mail, Users, Send, CheckCircle, AlertCircle, Search, Clock } from 'lucide-react';
 import { FirebaseAuthUser } from '@/app/api/users/route';
 import { fetchAllUsers } from '@/lib/firebase-users-simple';
 import { EmailTemplate } from '@/types';
@@ -24,7 +24,7 @@ interface EmailJob {
     templateId: string;
     userIds: string[];
     subject: string;
-    status: 'pending' | 'running' | 'completed' | 'failed';
+    status: 'pending' | 'processing' | 'completed' | 'failed';
     progress: number;
     totalEmails: number;
     sentEmails: number;
@@ -53,12 +53,113 @@ export default function BulkEmailPageSimple() {
     const [emailJobs, setEmailJobs] = useState<EmailJob[]>([]);
     const [currentJob, setCurrentJob] = useState<EmailJob | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [queueStatus, setQueueStatus] = useState<{ pending: number; processing: number; total: number } | null>(null);
+    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     // Load users on component mount
     useEffect(() => {
         loadUsers();
         loadTemplates();
+        loadRecentJobs();
+        loadQueueStatus();
+
+        const queueInterval = setInterval(loadQueueStatus, 10000);
+
+        return () => {
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+            }
+            clearInterval(queueInterval);
+        };
     }, []);
+
+    const loadQueueStatus = async () => {
+        try {
+            const data = await apiClient.get('/api/queue');
+            if (data.success && data.queue) {
+                setQueueStatus(data.queue);
+            }
+        } catch (err) {
+            console.error('Error loading queue status:', err);
+        }
+    };
+
+    const loadRecentJobs = async () => {
+        try {
+            const data = await apiClient.get('/api/queue/status?limit=10');
+            if (data.success && data.jobs) {
+                const jobs = data.jobs.map((job: any) => ({
+                    id: job.id,
+                    templateId: job.templateId,
+                    userIds: job.userIds,
+                    subject: job.subject || '',
+                    status: job.status,
+                    progress: job.progress,
+                    totalEmails: job.totalEmails,
+                    sentEmails: job.sentEmails,
+                    failedEmails: job.failedEmails,
+                    createdAt: new Date(job.createdAt),
+                    completedAt: job.completedAt ? new Date(job.completedAt) : undefined,
+                    errors: job.errors || [],
+                }));
+                setEmailJobs(jobs);
+            }
+        } catch (err) {
+            console.error('Error loading recent jobs:', err);
+        }
+    };
+
+    const startPolling = (jobId: string) => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+        }
+
+        pollingIntervalRef.current = setInterval(async () => {
+            try {
+                const data = await apiClient.get(`/api/queue/status?jobId=${jobId}`);
+                
+                if (data.success && data.job) {
+                    const job = data.job;
+                    
+                    setCurrentJob(prev => {
+                        if (!prev) return null;
+                        const updated = {
+                            ...prev,
+                            status: job.status,
+                            progress: job.progress,
+                            sentEmails: job.sentEmails,
+                            failedEmails: job.failedEmails,
+                            errors: job.errors || [],
+                            completedAt: job.completedAt ? new Date(job.completedAt) : undefined,
+                        };
+                        return updated;
+                    });
+
+                    setEmailJobs(prev => prev.map(j => 
+                        j.id === jobId 
+                            ? { 
+                                ...j, 
+                                status: job.status,
+                                progress: job.progress,
+                                sentEmails: job.sentEmails,
+                                failedEmails: job.failedEmails,
+                                completedAt: job.completedAt ? new Date(job.completedAt) : undefined,
+                            }
+                            : j
+                    ));
+
+                    if (job.status === 'completed' || job.status === 'failed') {
+                        if (pollingIntervalRef.current) {
+                            clearInterval(pollingIntervalRef.current);
+                            pollingIntervalRef.current = null;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Error polling job status:', err);
+            }
+        }, 2000);
+    };
 
     const loadUsers = async () => {
         setIsLoadingUsers(true);
@@ -124,23 +225,6 @@ export default function BulkEmailPageSimple() {
         }
 
         setError(null);
-        const newJob: EmailJob = {
-            id: Date.now().toString(),
-            templateId: selectedTemplateId,
-            userIds: Array.from(selectedUserIds),
-            subject: customSubject,
-            status: 'pending',
-            progress: 0,
-            totalEmails: selectedUserIds.size,
-            sentEmails: 0,
-            failedEmails: 0,
-            createdAt: new Date(),
-            errors: []
-        };
-
-        setCurrentJob(newJob);
-        setEmailJobs(prev => [newJob, ...prev]);
-        setActiveTab('results');
 
         try {
             const request: BulkEmailRequest = {
@@ -149,70 +233,35 @@ export default function BulkEmailPageSimple() {
                 subject: customSubject
             };
 
-            const response = await apiClient.fetch('/api/bulk-email', {
-                method: 'POST',
-                body: JSON.stringify(request)
-            });
+            const data = await apiClient.post('/api/queue', request);
 
-            if (!response.ok) {
-                throw new Error('Failed to send bulk email');
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to queue email job');
             }
 
-            const reader = response.body?.getReader();
-            if (!reader) throw new Error('No response stream');
+            const newJob: EmailJob = {
+                id: data.jobId,
+                templateId: selectedTemplateId,
+                userIds: Array.from(selectedUserIds),
+                subject: customSubject,
+                status: 'pending',
+                progress: 0,
+                totalEmails: selectedUserIds.size,
+                sentEmails: 0,
+                failedEmails: 0,
+                createdAt: new Date(),
+                errors: []
+            };
 
-            // Read the streaming response
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
+            setCurrentJob(newJob);
+            setEmailJobs(prev => [newJob, ...prev]);
+            setActiveTab('results');
 
-                const chunk = new TextDecoder().decode(value);
-                const lines = chunk.split('\n');
-
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        try {
-                            const data = JSON.parse(line.slice(6));
-                            
-                            setCurrentJob(prev => {
-                                if (!prev) return null;
-                                const updated = {
-                                    ...prev,
-                                    status: data.status,
-                                    progress: data.progress,
-                                    sentEmails: data.sent,
-                                    failedEmails: data.failed,
-                                    errors: data.errors || []
-                                };
-                                
-                                if (data.status === 'completed' || data.status === 'failed') {
-                                    updated.completedAt = new Date();
-                                }
-                                
-                                return updated;
-                            });
-
-                            setEmailJobs(prev => prev.map(job => 
-                                job.id === newJob.id 
-                                    ? { ...job, ...data, completedAt: data.status === 'completed' || data.status === 'failed' ? new Date() : undefined }
-                                    : job
-                            ));
-
-                        } catch (e) {
-                            console.error('Error parsing stream data:', e);
-                        }
-                    }
-                }
-            }
+            startPolling(data.jobId);
 
         } catch (err) {
-            console.error('Error sending bulk email:', err);
-            setError('Failed to send bulk email');
-            
-            setCurrentJob(prev => prev ? { ...prev, status: 'failed' } : null);
-            setEmailJobs(prev => prev.map(job => 
-                job.id === newJob.id ? { ...job, status: 'failed' } : job
-            ));
+            console.error('Error queueing bulk email:', err);
+            setError(err instanceof Error ? err.message : 'Failed to queue email job');
         }
     };
 
@@ -440,6 +489,40 @@ export default function BulkEmailPageSimple() {
 
                 {/* Results Tab */}
                 <TabsContent value="results" className="space-y-4">
+                    {/* Queue Status Card */}
+                    {queueStatus && (
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <Clock className="h-5 w-5" />
+                                    Queue Status
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-3 gap-4 text-center">
+                                    <div>
+                                        <div className="text-2xl font-bold text-amber-600">{queueStatus.pending}</div>
+                                        <div className="text-xs text-gray-500">Pending</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-2xl font-bold text-blue-600">{queueStatus.processing}</div>
+                                        <div className="text-xs text-gray-500">Processing</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-2xl font-bold text-gray-600">{queueStatus.total}</div>
+                                        <div className="text-xs text-gray-500">Total</div>
+                                    </div>
+                                </div>
+                                {queueStatus.total > 0 && (
+                                    <div className="mt-4 text-sm text-gray-600">
+                                        <p>Emails are processed in batches every minute by the server.</p>
+                                        <p className="mt-1">Rate: ~5 emails per second to comply with SES limits.</p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
+
                     <Card>
                         <CardHeader>
                             <CardTitle>Email Campaign Results</CardTitle>
@@ -456,8 +539,10 @@ export default function BulkEmailPageSimple() {
                                             variant={
                                                 currentJob.status === 'completed' ? 'default' : 
                                                 currentJob.status === 'failed' ? 'destructive' : 
+                                                currentJob.status === 'processing' ? 'default' :
                                                 'secondary'
                                             }
+                                            className={currentJob.status === 'processing' ? 'bg-blue-500' : ''}
                                         >
                                             {currentJob.status}
                                         </Badge>
@@ -537,8 +622,10 @@ export default function BulkEmailPageSimple() {
                                                     variant={
                                                         job.status === 'completed' ? 'default' : 
                                                         job.status === 'failed' ? 'destructive' : 
+                                                        job.status === 'processing' ? 'default' :
                                                         'secondary'
                                                     }
+                                                    className={job.status === 'processing' ? 'bg-blue-500' : ''}
                                                 >
                                                     {job.status}
                                                 </Badge>

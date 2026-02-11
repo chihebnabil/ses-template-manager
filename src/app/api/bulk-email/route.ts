@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase-admin';
+import { getAdminAuth } from '@/lib/firebase-admin';
 import { SESClient, SendTemplatedEmailCommand } from '@aws-sdk/client-ses';
 import { AuthMiddleware, getClientIp } from '@/lib/auth-middleware';
 
@@ -93,6 +93,8 @@ export async function POST(request: NextRequest) {
                     // Process users in batches to avoid rate limits
                     const batchSize = 5;
                     const delay = 1000; // 1 second delay between batches
+
+                    const adminAuth = getAdminAuth();
 
                     for (let i = 0; i < userIds.length; i += batchSize) {
                         const batch = userIds.slice(i, i + batchSize);

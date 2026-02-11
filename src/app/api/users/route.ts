@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase-admin';
+import { getAdminAuth } from '@/lib/firebase-admin';
 import { UserRecord } from 'firebase-admin/auth';
 import { AuthMiddleware, getClientIp } from '@/lib/auth-middleware';
 
@@ -70,6 +70,8 @@ export async function GET(request: NextRequest) {
         let currentPageToken: string | undefined = pageToken;
         let usersToFetch = requestedMaxResults;
 
+        const adminAuth = getAdminAuth();
+
         while (usersToFetch > 0) {
             const batchSize = Math.min(usersToFetch, 1000); // Firebase limit is 1000
             const listUsersResult = await adminAuth.listUsers(batchSize, currentPageToken);
@@ -117,6 +119,8 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
         const { action, maxResults = 100 } = body;
+
+        const adminAuth = getAdminAuth();
 
         if (action === 'count') {
             // Get user count
