@@ -4,6 +4,9 @@ import { EmailTemplate } from '@/types';
 import { fixTemplateEmojis } from '@/lib/emoji-utils';
 import { AuthMiddleware, getClientIp } from '@/lib/auth-middleware';
 
+// Force dynamic rendering to access request headers at runtime
+export const dynamic = 'force-dynamic';
+
 // Initialize SES client with server-side environment variables
 const getSESClient = (): SESClient => {
     return new SESClient({

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthMiddleware } from '@/lib/auth-middleware';
 import { getEmailJob, getRecentJobs } from '@/lib/qstash-queue';
 
+// Force dynamic rendering to access request headers at runtime
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
     try {
         const authResult = await AuthMiddleware.authenticate(request, {

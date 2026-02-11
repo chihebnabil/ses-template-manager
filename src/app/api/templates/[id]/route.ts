@@ -3,6 +3,9 @@ import { SESClient, GetTemplateCommand, UpdateTemplateCommand, DeleteTemplateCom
 import { AuthMiddleware, getClientIp } from '@/lib/auth-middleware';
 import { fixTemplateEmojis } from '@/lib/emoji-utils';
 
+// Force dynamic rendering to access request headers at runtime
+export const dynamic = 'force-dynamic';
+
 // Initialize SES client with server-side environment variables
 const getSESClient = (): SESClient => {
     return new SESClient({

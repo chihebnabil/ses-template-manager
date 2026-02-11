@@ -3,6 +3,9 @@ import { getAdminAuth } from '@/lib/firebase-admin';
 import { UserRecord } from 'firebase-admin/auth';
 import { AuthMiddleware, getClientIp } from '@/lib/auth-middleware';
 
+// Force dynamic rendering to access request headers at runtime
+export const dynamic = 'force-dynamic';
+
 export interface FirebaseAuthUser {
     uid: string;
     email: string;

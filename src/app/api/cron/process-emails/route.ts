@@ -4,6 +4,9 @@ import { getAdminAuth } from '@/lib/firebase-admin';
 import { SESClient, SendTemplatedEmailCommand } from '@aws-sdk/client-ses';
 import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
 
+// Force dynamic rendering to access request headers at runtime
+export const dynamic = 'force-dynamic';
+
 const sesClient = new SESClient({
     region: process.env.AWS_REGION || 'us-east-1',
     credentials: {

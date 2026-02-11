@@ -3,6 +3,9 @@ import { getAdminAuth } from '@/lib/firebase-admin';
 import { SESClient, SendTemplatedEmailCommand } from '@aws-sdk/client-ses';
 import { AuthMiddleware, getClientIp } from '@/lib/auth-middleware';
 
+// Force dynamic rendering to access request headers at runtime
+export const dynamic = 'force-dynamic';
+
 // Initialize SES client
 const sesClient = new SESClient({
     region: process.env.AWS_REGION || 'us-east-1',

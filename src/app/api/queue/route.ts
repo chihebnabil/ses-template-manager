@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthMiddleware, getClientIp } from '@/lib/auth-middleware';
 import { createEmailJob, getRecentJobs } from '@/lib/qstash-queue';
 
+// Force dynamic rendering to access request headers at runtime
+export const dynamic = 'force-dynamic';
+
 const bulkEmailRateLimiter = AuthMiddleware.createRateLimiter(5, 60 * 60 * 1000);
 
 interface EnqueueRequest {
