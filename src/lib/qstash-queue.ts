@@ -116,8 +116,8 @@ export async function createEmailJob(
 
 export async function getEmailJob(jobId: string): Promise<EmailJob | null> {
     const redis = getRedisClient();
-    const data = await redis.get<string>(`${JOB_PREFIX}${jobId}`);
-    return data ? JSON.parse(data) : null;
+    const data = await redis.get<EmailJob>(`${JOB_PREFIX}${jobId}`);
+    return data || null;
 }
 
 export async function updateEmailJob(jobId: string, updates: Partial<EmailJob>): Promise<EmailJob | null> {
@@ -177,8 +177,8 @@ export async function getRecentJobs(limit: number = 20): Promise<EmailJob[]> {
 
     const jobs = await Promise.all(
         keys.map(async (key) => {
-            const data = await redis.get<string>(key as string);
-            return data ? JSON.parse(data) as EmailJob : null;
+            const data = await redis.get<EmailJob>(key as string);
+            return data;
         })
     );
 

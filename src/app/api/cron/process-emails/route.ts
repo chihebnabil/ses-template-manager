@@ -95,16 +95,8 @@ async function handler(request: NextRequest) {
 }
 
 // Wrap handler with QStash signature verification
-// Skip verification if env vars are not set (build time)
-const currentSigningKey = process.env.QSTASH_CURRENT_SIGNING_KEY;
-const nextSigningKey = process.env.QSTASH_NEXT_SIGNING_KEY;
-
-export const POST = (currentSigningKey && nextSigningKey)
-    ? verifySignatureAppRouter(handler, {
-        currentSigningKey,
-        nextSigningKey,
-    })
-    : handler;
+// QStash will automatically verify signatures using env vars
+export const POST = verifySignatureAppRouter(handler);
 
 // Keep GET for backward compatibility during transition
 export async function GET(request: NextRequest) {
