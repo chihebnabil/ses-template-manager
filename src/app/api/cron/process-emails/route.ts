@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { processBatchResult } from '@/lib/qstash-queue';
 import { getAdminAuth } from '@/lib/firebase-admin';
 import { SESClient, SendTemplatedEmailCommand } from '@aws-sdk/client-ses';
-import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
+import { Receiver } from '@upstash/qstash';
 
 // Force dynamic rendering to access request headers at runtime
 export const dynamic = 'force-dynamic';
@@ -24,9 +24,58 @@ interface ProcessEmailRequest {
     totalBatches: number;
 }
 
-async function handler(request: NextRequest) {
+export async function POST(request: NextRequest) {
     try {
-        const data: ProcessEmailRequest = await request.json();
+        // Log all headers for debugging
+        const headers: Record<string, string> = {};
+        request.headers.forEach((value, key) => {
+            headers[key] = value;
+        });
+        console.log('QStash webhook headers:', JSON.stringify(headers, null, 2));
+
+        // Log env vars (masked)
+        console.log('QSTASH_CURRENT_SIGNING_KEY exists:', !!process.env.QSTASH_CURRENT_SIGNING_KEY);
+        console.log('QSTASH_NEXT_SIGNING_KEY exists:', !!process.env.QSTASH_NEXT_SIGNING_KEY);
+
+        // Get signature from headers
+        const signature = request.headers.get('upstash-signature');
+        if (!signature) {
+            console.error('Missing upstash-signature header');
+            return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
+        }
+
+        // Get the body for verification
+        const body = await request.text();
+        console.log('Request body length:', body.length);
+
+        // Verify signature manually with detailed error logging
+        try {
+            const receiver = new Receiver({
+                currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY!,
+                nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY!,
+            });
+
+            const isValid = await receiver.verify({
+                body,
+                signature,
+            });
+
+            if (!isValid) {
+                console.error('Signature verification returned false');
+                return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+            }
+
+            console.log('Signature verification passed');
+        } catch (verifyError) {
+            console.error('Signature verification error:', verifyError);
+            return NextResponse.json({
+                error: 'Signature verification failed',
+                details: verifyError instanceof Error ? verifyError.message : 'Unknown error'
+            }, { status: 401 });
+        }
+
+        // Parse the body
+        const data: ProcessEmailRequest = JSON.parse(body);
         const { jobId, templateId, userIds, subject, batchIndex, totalBatches } = data;
 
         console.log(`Processing QStash message for job ${jobId}, batch ${batchIndex + 1}/${totalBatches}`);
@@ -93,10 +142,6 @@ async function handler(request: NextRequest) {
         );
     }
 }
-
-// Wrap handler with QStash signature verification
-// QStash will automatically verify signatures using env vars
-export const POST = verifySignatureAppRouter(handler);
 
 // Keep GET for backward compatibility during transition
 export async function GET(request: NextRequest) {
