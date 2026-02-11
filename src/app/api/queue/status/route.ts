@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthMiddleware } from '@/lib/auth-middleware';
-import { getEmailJob, getRecentJobs } from '@/lib/redis-queue';
+import { getEmailJob, getRecentJobs } from '@/lib/qstash-queue';
 
 export async function GET(request: NextRequest) {
     try {

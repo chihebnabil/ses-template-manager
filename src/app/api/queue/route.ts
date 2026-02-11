@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthMiddleware, getClientIp } from '@/lib/auth-middleware';
-import { createEmailJob, getQueueStatus } from '@/lib/redis-queue';
+import { createEmailJob, getRecentJobs } from '@/lib/qstash-queue';
 
 const bulkEmailRateLimiter = AuthMiddleware.createRateLimiter(5, 60 * 60 * 1000);
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        console.log('Bulk email queued:', {
+        console.log('Bulk email queued via QStash:', {
             templateId,
             recipientCount: userIds.length,
             timestamp: new Date().toISOString(),
@@ -63,7 +63,8 @@ export async function POST(request: NextRequest) {
             jobId: job.id,
             status: job.status,
             totalEmails: job.totalEmails,
-            message: `Email job created successfully. ${userIds.length} emails queued.`,
+            qstashMessages: job.qstashMessages,
+            message: `Email job created successfully. ${userIds.length} emails queued in ${job.qstashMessages} batches.`,
         });
 
     } catch (error) {
@@ -87,11 +88,30 @@ export async function GET(request: NextRequest) {
             return authResult.response!;
         }
 
-        const status = await getQueueStatus();
+        const recentJobs = await getRecentJobs(20);
+        
+        // Calculate queue stats from recent jobs
+        const pending = recentJobs.filter(j => j.status === 'pending').length;
+        const processing = recentJobs.filter(j => j.status === 'processing').length;
         
         return NextResponse.json({
             success: true,
-            queue: status,
+            queue: {
+                pending,
+                processing,
+                total: pending + processing,
+            },
+            recentJobs: recentJobs.map(job => ({
+                id: job.id,
+                status: job.status,
+                totalEmails: job.totalEmails,
+                sentEmails: job.sentEmails,
+                failedEmails: job.failedEmails,
+                progress: job.totalEmails > 0 
+                    ? Math.round(((job.sentEmails + job.failedEmails) / job.totalEmails) * 100)
+                    : 0,
+                createdAt: job.createdAt,
+            })),
         });
 
     } catch (error) {

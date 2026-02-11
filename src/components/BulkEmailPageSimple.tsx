@@ -32,6 +32,8 @@ interface EmailJob {
     createdAt: Date;
     completedAt?: Date;
     errors: string[];
+    qstashMessages?: number;
+    processedMessages?: number;
 }
 
 interface BulkEmailRequest {
@@ -131,6 +133,8 @@ export default function BulkEmailPageSimple() {
                             failedEmails: job.failedEmails,
                             errors: job.errors || [],
                             completedAt: job.completedAt ? new Date(job.completedAt) : undefined,
+                            qstashMessages: job.qstashMessages,
+                            processedMessages: job.processedMessages,
                         };
                         return updated;
                     });
@@ -144,6 +148,8 @@ export default function BulkEmailPageSimple() {
                                 sentEmails: job.sentEmails,
                                 failedEmails: job.failedEmails,
                                 completedAt: job.completedAt ? new Date(job.completedAt) : undefined,
+                                qstashMessages: job.qstashMessages,
+                                processedMessages: job.processedMessages,
                             }
                             : j
                     ));
@@ -250,7 +256,9 @@ export default function BulkEmailPageSimple() {
                 sentEmails: 0,
                 failedEmails: 0,
                 createdAt: new Date(),
-                errors: []
+                errors: [],
+                qstashMessages: data.qstashMessages,
+                processedMessages: 0
             };
 
             setCurrentJob(newJob);
@@ -515,8 +523,8 @@ export default function BulkEmailPageSimple() {
                                 </div>
                                 {queueStatus.total > 0 && (
                                     <div className="mt-4 text-sm text-gray-600">
-                                        <p>Emails are processed in batches every minute by the server.</p>
-                                        <p className="mt-1">Rate: ~5 emails per second to comply with SES limits.</p>
+                                        <p>Emails are processed via QStash queue service.</p>
+                                        <p className="mt-1">Rate: 10 emails per batch with automatic retries on failure.</p>
                                     </div>
                                 )}
                             </CardContent>
@@ -570,6 +578,20 @@ export default function BulkEmailPageSimple() {
                                             <div className="text-xs text-gray-500">Total</div>
                                         </div>
                                     </div>
+
+                                    {currentJob.qstashMessages && currentJob.qstashMessages > 0 && (
+                                        <div className="p-3 bg-gray-50 rounded text-sm">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Batches:</span>
+                                                <span className="font-medium">
+                                                    {currentJob.processedMessages || 0} / {currentJob.qstashMessages} completed
+                                                </span>
+                                            </div>
+                                            <div className="mt-1 text-xs text-gray-500">
+                                                Processed via QStash queue service
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {currentJob.errors.length > 0 && (
                                         <div className="space-y-2">
